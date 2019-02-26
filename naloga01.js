@@ -29,10 +29,17 @@ http.listen(8080); // strežnik bo poslušal na vratih 8080
 io.sockets.on("connection", function(socket) {
     socket.on("ukazArduinu", function(štUkaza) {
         if (štUkaza == "1") {
-            board.digitalWrite(13, board.HIGH); // zapišemo +5V na pin 13
+            setInterval(function(){ board.digitalWrite(13, board.HIGH)}, 1000);
+             setInterval(function(){ }, 1000);
+             setInterval(function(){ board.digitalWrite(8, board.HIGH) }, 2000);
+             setInterval(function(){ }, 1000);
+             setInterval(function(){ board.digitalWrite(7, board.HIGH) }, 3000);
+             setInterval(function(){ }, 1000);
+             setInterval(function(){ board.digitalWrite(2, board.HIGH) }, 4000);
         }
         if (štUkaza == "0") {
             board.digitalWrite(13, board.LOW); // zapišemo 0V na pin13
+            
         }
         if (štUkaza == "3") {
             board.digitalWrite(8, board.HIGH); // zapišemo +5V na pin 8
