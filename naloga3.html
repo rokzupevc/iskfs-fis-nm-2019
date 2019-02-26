@@ -3,18 +3,29 @@
 <html>
 
 <head>
-    <title>Primer s tipko, funkcija protiodboja</title>
+    <title>Primer s tipko</title>
 </head>
 
 <body>
+<canvas id="canvas" width="300" height="150" style="border:1px solid #d3d3d3;">
+</canvas>
+
+
 
 <div id="divZaIzpis"></div>
 
 <br>
 
 <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script>
+var c = document.getElementById("canvas");
+var ctx = c.getContext("2d");
+ctx.fillStyle = "green";
+ctx.fillRect(20, 20, 150, 100);
+</script>
 
 <script type="text/javascript">
+
 "use strict"; // za uporabo razredov ("class")
 
 var divZaIzpis = document.getElementById("divZaIzpis");
@@ -35,7 +46,7 @@ function log(sporočilo) {
 
 log("Pritisnite tipko na vezju");
 
-var socket = io.connect("192.168.1.117:8080"); // povezava preko vtičnika
+var socket = io.connect("192.168.1.116:8080"); // povezava preko vtičnika
 
 socket.on("sporočiloKlientu", function (sporočilo){
     log(sporočilo); // dodamo sporočilo

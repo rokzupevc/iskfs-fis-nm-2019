@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<meta charset = utf8>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Primer z gumbi</title>
+
+</head>
+
+
+    
+<button class="button" id="gumbPrižgi1" class="button"  onClick="prižgi1()">Prižgi Z</button>
+<button class="button" id="gumbUgasni1" class="button"  onClick="ugasni1()">Ugasni Z</button>
+<p></p>
+<button class="button" id="gumbPrižgi2" class="button"  onClick="prižgi2()">Prižgi R</button>
+<button class="button" id="gumbUgasni2" class="button"  onClick="ugasni2()">Ugasni R</button>
+<p></p>
+<button class="button" id="gumbPrižgi3" class="button"  onClick="prižgi3()">Prižgi M</button>
+<button class="button" id="gumbUgasni3" class="button"  onClick="ugasni3()">Ugasni M</button>
+<p></p>
+<button class="button" id="gumbPrižgi4" class="button"  onClick="prižgi4()">Prižgi O</button>
+<button class="button" id="gumbUgasni4" class="button"  onClick="ugasni4()">Ugasni O</button>
+<p></p>
+<button class="button" id="gumbUSE"class="button"   onClick="prižgiUse()">Prižgi V </button>
+<button class="button" id="gumbUSEUGASNI "class="button"   onClick="ugasniUse()">Ugasni V </button>
+<p></p>
+
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+
+<script type="text/javascript">
+var socket = io.connect("192.168.1.123:8080"); // povez. prek vtičnika
+function prižgi1 () {
+    socket.emit("ukazArduinu", 1); // na strežnik pošljem 1
+}
+function ugasni1 () {
+    socket.emit("ukazArduinu", 0); // na strežnik pošljem 0
+}
+function prižgi2 () {
+    socket.emit("ukazArduinu", 3); // na strežnik pošljem 1
+}
+function ugasni2 () {
+    socket.emit("ukazArduinu", 2); // na strežnik pošljem 0
+}
+function prižgi3 () {
+    socket.emit("ukazArduinu", 5); // na strežnik pošljem 1
+}
+function ugasni3 () {
+    socket.emit("ukazArduinu", 4); // na strežnik pošljem 0
+}
+function prižgi4 () {
+    socket.emit("ukazArduinu", 7); // na strežnik pošljem 1
+}
+function ugasni4 () {
+    socket.emit("ukazArduinu", 6); // na strežnik pošljem 0
+}
+function prižgiUse () { // prižiganje vseh led diod
+    prižgi1 ();
+    prižgi2 ();
+    prižgi3 ();
+    prižgi4 ();
+}
+function ugasniUse () { // ugašanje vseh led diod na
+    ugasni1 ();
+    ugasni2 ();
+    ugasni3 ();
+    ugasni4 ();
+}
+</script>
+    
+    
+    <style>
+    .button {
+        background-color: #4CAF50;
+        border: none;
+        color: white;
+        width:100%;
+        padding: 15px 32px;
+        text-align: center;
+        font-size: 20px;
+        margin: 4px 2px;
+        cursor: pointer;
+    }
+</style>    
+    
+</body>
+
+</html>
