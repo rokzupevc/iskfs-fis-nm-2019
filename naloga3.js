@@ -67,10 +67,7 @@ board.digitalRead(2, function(value) { // digitalno branje se dogodi večkrat, o
                 board.digitalWrite(13, board.HIGH);
                 console.log("Vrednost = 1, LED prižgana");
                 pošljiVrednostPrekoVtičnika(1);
-                var d = document.getElementById("canvas");
-                var ctd = d.getContext("2d");
-                ctd.fillStyle = "red";
-                ctd.fillRect(20, 20, 150, 100);
+                
             }
 
         }

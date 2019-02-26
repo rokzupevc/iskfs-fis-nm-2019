@@ -42,14 +42,27 @@ function log(sporočilo) {
     divZaIzpis.removeChild(divZaIzpis.childNodes[številoVrsticPredPomikom]); // odstranimo najstarejši izpis
     }
     števecIzpisanihVrstic++; // povečamo števec izpisov
-}    
+}
+
+
+
 
 log("Pritisnite tipko na vezju");
 
 var socket = io.connect("192.168.1.116:8080"); // povezava preko vtičnika
 
 socket.on("sporočiloKlientu", function (sporočilo){
-    log(sporočilo); // dodamo sporočilo
+    log(sporočilo);
+ if(sporočilo==1){
+     ctx.fillStyle="red";
+    ctx.fillRect(20, 20, 150, 100);
+ }   
+else if(sporočilo==0){
+       ctx.fillStyle="green";
+    ctx.fillRect(20, 20, 150, 100);
+}
+    
+ 
 });
 
 </script>
