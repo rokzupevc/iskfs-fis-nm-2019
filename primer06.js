@@ -38,8 +38,11 @@ io.sockets.on("connection", function(socket) {
         if (štUkaza == "2") {
             board.digitalWrite(8, board.LOW); // zapišemo 0V na pin8
         }
+<<<<<<< HEAD
                  
         
        
+=======
+>>>>>>> 9d7f92be9eb58bce1a9d0f76435f68c1f56841c3
     });
 });
