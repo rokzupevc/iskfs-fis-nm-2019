@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<meta charset = utf8>
+<html>
+
+<head>
+    <title>Primer s tipko</title>
+</head>
+
+<body>
+
+<div id="divZaIzpis"></div>
+
+<br>
+
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+
+<script type="text/javascript">
+"use strict"; // za uporabo razredov ("class")
+
+var divZaIzpis = document.getElementById("divZaIzpis");
+// spremenljivka za izpis sporočil
+
+function log(sporočilo) {
+    return "<div>" + sporočilo + "</div>";
+}
+
+divZaIzpis.innerHTML += log("Pritisnite tipko na vezju");
+
+var socket = io.connect("192.168.1.116:8080"); // povezava preko vtičnika
+
+socket.on("sporočiloKlientu", function (sporočilo){
+    divZaIzpis.innerHTML += log(sporočilo); // dodamo sporočilo
+});
+
+</script>
+    
+</body>
+    
+</html>
