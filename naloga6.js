@@ -27,6 +27,7 @@ var board = new firmata.Board("/dev/ttyACM0", function(){
     console.log("Aktiviramo pin 3");
 
     board.pinMode(3, board.MODES.PWM); // Pulse Width Modulation - hitrost
+    board.pinMode(8, board.MODES.OUTPUT);
 
 });
 
@@ -81,15 +82,26 @@ board.on("ready", function(){
     board.analogRead(0, function(value){
 
         želenaVrednost = value; // neprekinjeno branje pina A0
+        
 
     });
 
     board.analogRead(1, function(value){
 
         dejanskaVrednost = value; // neprekinjeno branje pina A1
-
+        console.log("dejanskaVrednost="+value);
+        if(value >= 200 && value <= 850) {
+        
+    prizgi();
+         
+    }
     });
-
+    function prizgi(){
+        
+        board.digitalWrite(8, board.LOW);
+        
+        
+    }
     
 
     //startKontrolniAlgoritem(); // poženemo kontrolni algoritem
@@ -143,9 +155,12 @@ function kontrolniAlgoritem () {
     if (dejanskaVrednost < 200 || dejanskaVrednost > 850) {
 
         stopKontrolniAlgoritem();
+        board.digitalWrite(8, board.HIGH);
         
 
     }
+    
+    
 
 }
 
