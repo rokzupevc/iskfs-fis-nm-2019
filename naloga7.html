@@ -13,6 +13,8 @@ Kontrolni sistem P - kontroler
 
 <button id="startKontrolniAlgoritem" onClick="startKontrolniAlgoritem();">Start Ctrl Alg</button>
 <button id="stopKontrolniAlgoritem" onClick="stopKontrolniAlgoritem();">Stop Ctrl Alg</button>
+<br>
+faktor: <input id="faktor" value="0.5" size="5" />
 
 <div id="divZaIzpis"></div>
 
@@ -32,6 +34,8 @@ var potVrednost2; // vrednost drugega potenciometra
 var divZaIzpis = document.getElementById("divZaIzpis"); // var za div el.
 var štVrsticPredPomikom = 10;
 var števecIzpisanihVrstic = 0;
+
+var faktor = 0;
 
 var socket = io.connect("192.168.1.116:8080"); // povezava na strež.
 
@@ -132,7 +136,8 @@ socket.on("klientBeriVrednosti", function(value){
 });
 
 function startKontrolniAlgoritem() {
-    socket.emit("startKontrolniAlgoritem");
+    faktor = document.getElementById("faktor").value;
+    socket.emit("startKontrolniAlgoritem", {"faktor": faktor});
 }
 
 function stopKontrolniAlgoritem() {

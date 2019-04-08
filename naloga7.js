@@ -17,7 +17,7 @@ var board = new firmata.Board("/dev/ttyACM0", function(){
 });
 
 function handler(req, res) {
-    fs.readFile(__dirname + "/primer15.html",
+    fs.readFile(__dirname + "/naloga7.html",
     function(err, data) {
         if (err) {
             res.writeHead(500, {"Content-Type": "text/plain"});
@@ -32,20 +32,8 @@ http.listen(8080); // strežnik bo poslušal na vratih 8080
 
 var želenaVrednost = 0; // želeno vrednost postavimo na 0
 var dejanskaVrednost = 0; // dejansko vrednost postavimo na 0
-var faktor =0.4; // faktor, ki določa hitrost doseganja želenega stanja
+var faktor = 4; // faktor, ki določa hitrost doseganja želenega stanja
 var pwm = 0;
-
-// Spremenljivke PID algoritma
-var Kp = 0.8; // proporcionalni faktor
-var Ki = 0.008; // integralni faktor
-var Kd = 0.15; // diferencialni faktor
-
-var err = 0; // error
-var errVsota = 0; // vsota napak
-var dErr = 0; // diferenca napak
-var zadnjiErr = 0; // da obdržimo vrednost prejšnje napake
-
-
 
 var kontrolniAlgoritemVključen = 0; // spremenljivka, ki določa ali je ctrl. alg. vključen
 var intervalCtrl; // spremenljivka za setInterval v globalnem prostoru
@@ -67,8 +55,8 @@ board.on("ready", function(){
 
         setInterval(pošljiVrednosti, 40, socket); // na 40ms pošlj. vred.
         
-        socket.on("startKontrolniAlgoritem", function(){
-           startKontrolniAlgoritem(); 
+        socket.on("startKontrolniAlgoritem", function(parametri){
+           startKontrolniAlgoritem(parametri); 
         });
         
         socket.on("stopKontrolniAlgoritem", function(){
@@ -79,28 +67,22 @@ board.on("ready", function(){
     
 }); // konec board.on("ready")
 
-function kontrolniAlgoritem () {
-    err = želenaVrednost - dejanskaVrednost; // odstopanje ali error
-    errVsota += err; // vsota napak (kot integral)
-    dErr = err - zadnjiErr; // razlika odstopanj
-    pwm = Kp*err + Ki*errVsota + Kd*dErr; // izraz za PID kontroler (iz enačbe)
-    zadnjiErr = err; // shranimo vrednost za naslednji cikel za oceno odvoda
-
+function kontrolniAlgoritem (parametri) {
+    pwm = parametri.faktor*(želenaVrednost-dejanskaVrednost);
     if (pwm > 255) {pwm = 255}; // omejimo vrednost pwm na 255
     if (pwm < -255) {pwm = -255}; // omejimo vrednost pwm na -255
     if (pwm > 0) {board.digitalWrite(2,0)}; // določimo smer če je > 0
     if (pwm < 0) {board.digitalWrite(2,1)}; // določimo smer če je < 0
     board.analogWrite(3, Math.abs(pwm)); // zapišemo abs vrednost na pin 3
-
-    if (dejanskaVrednost < 200 || dejanskaVrednost > 850) {
+    if (dejanskaVrednost < 150 || dejanskaVrednost > 910) {
         stopKontrolniAlgoritem();
     }
 }
 
-function startKontrolniAlgoritem () {
+function startKontrolniAlgoritem (parametri) {
     if (kontrolniAlgoritemVključen == 0) {
         kontrolniAlgoritemVključen = 1;
-        intervalCtrl = setInterval(function(){kontrolniAlgoritem();}, 30); // kličemo alg. na 30ms
+        intervalCtrl = setInterval(function(){kontrolniAlgoritem(parametri);}, 30); // kličemo alg. na 30ms
         console.log("Zagon kontrolnega algoritma");       
     }
 }
