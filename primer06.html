@@ -28,7 +28,7 @@
 
 var socket1 = io.connect("192.168.1.116:8080"); // povez. prek vtičnika 1.
 
-var socket2 = io.connect("192.168.1.117:8080"); // povez. prek vtičnika 2.
+var socket2 = io.connect("192.168.1.123:8080"); // povez. prek vtičnika 2.
 
 function prižgi1 () {
     socket1.emit("ukazArduinu", 1); // na strežnik pošljem 1

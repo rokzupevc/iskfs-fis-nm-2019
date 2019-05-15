@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<meta charset = utf8>
+<html>
+<head>
+    <title>Kontrolni sistem</title>
+</head>
+
+<body onload="load()">
+Kontrolni sistem P / PID
+<br>
+<canvas id="cv" width = "200" height = "100" style="border: 1px dashed #00c3c3;"></canvas>
+<p></p>
+Pozicija: <input id="pozicija" value=512 />    
+<button id="pošljiPozicijo" onClick="pošljiPozicijo()">Pozicija</button>
+<p></p>
+<p></p>
+Pozicija: <input id="pozicijam" value=512 />    
+<button id="pošljiPozicijom" onClick="pošljiPozicijom()">Pozicija</button>
+<p></p>
+<button id="pošljim80" onClick="pošljim80()">Pošlji -80</button>
+<button id="pošljim40" onClick="pošljim40()">Pošlji -40</button>
+<button id="pošlji0" onClick="pošlji0()">Pošlji 0</button>
+<button id="pošljip40" onClick="pošljip40()">Pošlji +40</button>
+<button id="pošljip80" onClick="pošljip80()">Pošlji +80</button>
+<p></p>
+<p></p>
+<button id="pošljim80m" onClick="pošljimm80()">Pošlji -80</button>
+<button id="pošljim40m" onClick="pošljimm40()">Pošlji -40</button>
+<button id="pošlji0m" onClick="pošlji0m()">Pošlji 0</button>
+<button id="pošljip40m" onClick="pošljip40m()">Pošlji +40</button>
+<button id="pošljip80m" onClick="pošljip80m()">Pošlji +80</button>
+<p></p>
+faktor: <input id="faktor" value="0.5" size="5" />
+<button id="startKontrolniAlgoritem1" onClick="startKontrolniAlgoritem1();">Start Ctrl Alg</button>
+<button id="stopKontrolniAlgoritem" onClick="stopKontrolniAlgoritem();">Stop Ctrl Alg</button>
+<p></p>
+Kp: <input id="Kp1" value="0.5" size = "5" />
+Ki: <input id="Ki1" value="0.0055" size = "5" />
+Kd: <input id="Kd1" value="0.25" size = "5" />
+<button id="startKontrolniAlgoritem2m" onClick="startKontrolniAlgoritem2m();">Start Ctrl Alg2</button>
+<button id="stopKontrolniAlgoritemm" onClick="stopKontrolniAlgoritemm();">Stop Kontrolni Alg</button>
+<p></p>
+<p></p>
+faktor: <input id="faktor" value="0.5" size="5" />
+<button id="startKontrolniAlgoritem1m" onClick="startKontrolniAlgoritem1m();">Start Ctrl Alg</button>
+<button id="stopKontrolniAlgoritemm" onClick="stopKontrolniAlgoritemm();">Stop Ctrl Alg</button>
+<p></p>
+Kp: <input id="Kp1" value="0.5" size = "5" />
+Ki: <input id="Ki1" value="0.0055" size = "5" />
+Kd: <input id="Kd1" value="0.25" size = "5" />
+<button id="startKontrolniAlgoritem2m" onClick="startKontrolniAlgoritem2m();">Start Ctrl Alg2</button>
+<button id="stopKontrolniAlgoritemm" onClick="stopKontrolniAlgoritemm();">Stop Kontrolni Alg</button>
+<p></p>
+<div id="divZaStatičniIzpis"></div>
+<p></p>
+<div id="divZaŽelenoVrednost">×</div>
+<p></p>
+<div id="divZaIzpis"></div>
+
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+
+<script type="text/javascript">
+
+var x1 = new Array(); 
+var y1 = new Array(); 
+var x2 = new Array(); 
+var y2 = new Array(); 
+var canvas;
+var ctx;
+var potVrednost1; 
+var potVrednost2; 
+
+var divZaIzpis = document.getElementById("divZaIzpis"); 
+var štVrsticPredPomikom = 10;
+var števecIzpisanihVrstic = 0;
+
+var socket = io.connect("192.168.1.116:8080");
+var socket2 = io.connect("192.168.1.117:8080"); 
+
+function load() {
+    canvas = document.getElementById("cv");
+    ctx = canvas.getContext("2d");
+
+    
+    ctx.lineWidth = "1";
+    ctx.strokeStyle = "#ff0000";
+
+    for (var i = 0; i<200; i++) {
+        x1[i] = i; 
+        y1[i] = 0; 
+    }
+
+    ctx.beginPath(); 
+
+    for (var i=0; i<200; i++) {
+        ctx.lineTo(x1[i],y1[i]);
+    }
+
+    ctx.stroke();
+    
+  
+    ctx.lineWidth = "1";
+    ctx.strokeStyle = "#00ff00";
+
+    for (var i = 0; i<200; i++) {
+        x2[i] = i;  
+        y2[i] = 0; 
+    }
+
+    ctx.beginPath(); 
+
+    for (var i=0; i<200; i++) {
+        ctx.lineTo(x2[i],y2[i]);
+    }
+
+    ctx.stroke();    
+    
+}
+
+socket.on("klientBeriVrednosti", function(value){
+    
+    potVrednost1 = value.želenaVrednost; 
+    potVrednost2 = value.dejanskaVrednost; 
+    
+   
+    ctx.clearRect(0, 0, canvas.width, canvas.height); 
+    
+    // izris prve črte
+    ctx.strokeStyle = "#ff0000";
+    ctx.beginPath(); 
+    y1.splice(0, 1); 
+    y1[199] = potVrednost1; 
+    
+    for (var i=0; i<200; i++) {
+        ctx.lineTo(x1[i], (100 - (y1[i] / 1023) * 100)); 
+    }
+    
+    ctx.stroke(); 
+    
+    
+    ctx.strokeStyle = "#00ff00";
+    ctx.beginPath(); 
+    y2.splice(0, 1); 
+    y2[199] = potVrednost2; 
+    
+    for (var i=0; i<200; i++) {
+        ctx.lineTo(x2[i], (100 - (y2[i] / 1023) * 100)); 
+    }
+    
+    ctx.stroke(); 
+    
+   
+    
+    ctx.strokeStyle = "#ff0000";
+    ctx.font = "11px Arial";
+    ctx.fillText("Želena", 70, 10);
+    ctx.beginPath();
+    ctx.lineTo(50,6);
+    ctx.lineTo(65,6);
+    ctx.stroke();
+    
+    ctx.strokeStyle = "#00ff00";
+    ctx.font = "11px Arial";
+    ctx.fillText("Dejanska", 140, 10);
+    ctx.beginPath();
+    ctx.lineTo(120,6);
+    ctx.lineTo(135,6);
+    ctx.stroke();
+    
+    log(value.želenaVrednost + "|" + value.dejanskaVrednost + "|" + (value.želenaVrednost-value.dejanskaVrednost) + "|" + (value.pwm).toFixed(0));
+    
+});
+
+socket.on("statičnoSporočiloKlientu", function(sporočilo){
+   document.getElementById("divZaStatičniIzpis").innerHTML =  sporočilo;
+});
+socket2.on("statičnoSporočiloKlientu", function(sporočilo){
+   document.getElementById("divZaStatičniIzpis").innerHTML =  sporočilo;
+});
+
+
+
+
+function startKontrolniAlgoritem1() {
+    stopKontrolniAlgoritem(); 
+    faktor = document.getElementById("faktor").value; 
+    socket.emit("startKontrolniAlgoritem", {"štKontrolnegaAlg": 1, "faktor": faktor});
+}
+function startKontrolniAlgoritem1m() {
+    stopKontrolniAlgoritem(); 
+    faktor = document.getElementById("faktor").value; 
+    socket2.emit("startKontrolniAlgoritem", {"štKontrolnegaAlg": 1, "faktor": faktor});
+}
+function startKontrolniAlgoritem2() {
+    stopKontrolniAlgoritem(); 
+    Kp1 = document.getElementById("Kp1").value; 
+    Ki1 = document.getElementById("Ki1").value; 
+    Kd1 = document.getElementById("Kd1").value; 
+    socket.emit("startKontrolniAlgoritem", {"štKontrolnegaAlg": 2, "Kp1": Kp1, "Ki1": Ki1, "Kd1": Kd1}); 
+}
+function startKontrolniAlgoritem2m() {
+    stopKontrolniAlgoritem(); 
+    Kp1 = document.getElementById("Kp1").value; 
+    Ki1 = document.getElementById("Ki1").value; 
+    Kd1 = document.getElementById("Kd1").value; 
+    socket2.emit("startKontrolniAlgoritem", {"štKontrolnegaAlg": 2, "Kp1": Kp1, "Ki1": Ki1, "Kd1": Kd1}); 
+}
+
+function pošljiPozicijo () {
+    var vrednostPozicije = document.getElementById("pozicija").value;
+    socket.emit("pošljiPozicijo", vrednostPozicije);
+};
+function pošljiPozicijom () {
+    var vrednostPozicije = document.getElementById("pozicija").value;
+    socket2.emit("PošljiVrednost", vrednostPozicije);
+};
+function pošljim80 () {
+    var vrednostPozicije =240 ;
+    socket.emit("pošljiPozicijo", vrednostPozicije);
+};
+function pošljim80m () {
+    var vrednostPozicije =240 ;
+    socket2.emit("PošljiVrednost", vrednostPozicije);
+};
+
+function pošljim40 () {
+    var vrednostPozicije =376 ;
+    socket.emit("pošljiPozicijo", vrednostPozicije);
+};
+function pošljim40m () {
+    var vrednostPozicije =376 ;
+    socket2.emit("PošljiVrednost", vrednostPozicije);
+};
+
+function pošlji0 () {
+    var vrednostPozicije = 512;
+    socket.emit("pošljiPozicijo", vrednostPozicije);
+};
+function pošlji0m () {
+    var vrednostPozicije = 512;
+    socket2.emit("PošljiVrednost", vrednostPozicije);
+};
+
+function pošljip40 () {
+    var vrednostPozicije = 649;
+    socket.emit("pošljiPozicijo", vrednostPozicije);
+};
+function pošljip40m () {
+    var vrednostPozicije = 649;
+    socket2.emit("PošljiVrednost", vrednostPozicije);
+};
+
+function pošljip80() {
+    var vrednostPozicije =785 ;
+    socket.emit("pošljiPozicijo", vrednostPozicije);
+};
+function pošljip80m() {
+    var vrednostPozicije =785 ;
+    socket2.emit("PošljiVrednost", vrednostPozicije);
+};
+
+
+
+
+
+
+function stopKontrolniAlgoritem() {
+    socket.emit("stopKontrolniAlgoritem");
+}
+function stopKontrolniAlgoritemm() {
+    socket2.emit("stopKontrolniAlgoritem");
+}
+
+function log(sporočilo) {
+    var node=document.createElement("tr"); 
+    var textnode=document.createTextNode(števecIzpisanihVrstic + " | " + sporočilo); 
+    node.appendChild(textnode); 
+    divZaIzpis.insertBefore(node, divZaIzpis.childNodes[0]); 
+    if (števecIzpisanihVrstic > štVrsticPredPomikom-1) { 
+        divZaIzpis.removeChild(divZaIzpis.childNodes[štVrsticPredPomikom]); 
+    }
+    števecIzpisanihVrstic++; 
+}
+
+</script>
+
+
+</body>
+
+</html>
