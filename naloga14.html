@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<meta charset = utf8>
+<html>
+<head>
+    <title>Kontrolni sistem</title>
+</head>
+
+<body onload="load()">
+Kontrolni sistem P / PID
+<br>
+<canvas id="canvas1" width ="200" height = "100" style="border: 1px dashed #00c3c3;"></canvas>
+<canvas id="canvas4" width = "200" height = "100" style="border: 1px dashed #00c3c3;"></canvas>
+<br>
+<canvas id="canvas2" width ="200" height = "100" style="border: 1px dashed #00c3c3;"></canvas>    
+<canvas id="canvas5" width = "200" height = "100" style="border: 1px dashed #00c3c3;"></canvas>
+<br>
+<canvas id="canvas3" width = "200" height = "100" style="border: 1px dashed #00c3c3;"></canvas>
+<canvas id="canvas6" width = "200" height = "100" style="border: 1px dashed #00c3c3;"></canvas>
+<p></p>
+Pozicija: <input id="pozicija" value=512 />    
+<p></p>
+<button id="utrip" onClick="utrip()">Utrip</button>
+<button id="pošljiPozicijo" onClick="pošljiPozicijo()">Pozicija</button>
+<p></p>
+faktor: <input id="faktor" value="0.5" size="5" />
+<button id="startKontrolniAlgoritem1" onClick="startKontrolniAlgoritem1();">Start Ctrl Alg</button>
+<button id="stopKontrolniAlgoritem" onClick="stopKontrolniAlgoritem();">Stop Ctrl Alg</button>
+<p></p>
+Kp: <input id="Kp1" value="0.5" size = "5" />
+Ki: <input id="Ki1" value="0.0055" size = "5" />
+Kd: <input id="Kd1" value="0.25" size = "5" />
+<button id="startKontrolniAlgoritem2" onClick="startKontrolniAlgoritem2();">Start Ctrl Alg2</button>
+<button id="stopKontrolniAlgoritem" onClick="stopKontrolniAlgoritem();">Stop Kontrolni Alg</button>
+<p></p>
+<div id="divZaStatičniIzpis">Status: ×</div>
+<p></p>
+<div id="divZaIzpis"></div>
+
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+
+<script type="text/javascript">
+
+var x1 = new Array(); // polje za spremenljivko x1
+var y1 = new Array(); // polje za spremenljivko y1
+var x2 = new Array(); // polje za spremenljivko x2
+var y2 = new Array(); // polje za spremenljivko y2
+var canvas;
+var ctx;
+var potVrednost1; // vrednost prvega potenciometra
+var potVrednost2; // vrednost drugega potenciometra
+
+var divZaIzpis = document.getElementById("divZaIzpis"); // var za div el.
+var štVrsticPredPomikom = 10;
+var števecIzpisanihVrstic = 0;
+
+var graf1; // spremenljivka za objekt razreda Graf
+var graf2; // spremenljivka za objekt razreda Graf
+var graf3; // spremenljivka za objekt razreda Graf
+var graf4; // spremenljivka za objekt razreda Graf
+var graf5; // spremenljivka za objekt razreda Graf
+var graf6; // spremenljivka za objekt razreda Graf
+
+var divLog; // spremenljivka za objekt izpisa
+
+var intervalFunkcijaUtripa; // za funkcijo utripa
+
+var socket = io.connect("192.168.1.116:8080"); // povezava na strež.
+
+class Graf {
+    constructor(canvasId, minGraphX, maxGraphX, minGraphY, maxGraphY, color, legend, axisDescription) { // pri konstruktorju moramo podati ID platna, ki ga sicer ustvarimo v html-ju
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext("2d");
+        this.canvasWidth = this.canvas.width; // mind capital W at Width
+        this.canvasHeight = this.canvas.height; // mind capital H at Height
+        this.x = new Array(); // create new Array x
+        this.y = new Array();
+        this.rangeX = maxGraphX - minGraphX;
+        this.rangeY = maxGraphY - minGraphY;
+        
+        // create y array (size) according to the color vector (could have multiple rows i.e. 2d)
+        for( var i=0; i<color.length; i++ ) {
+            this.y.push([]); // example of three row array init. would be: this.y = [[],[],[]];
+        }
+        this.minGraphX = minGraphX;
+        this.maxGraphX = maxGraphX;
+        this.minGraphY = minGraphY;
+        this.maxGraphY = maxGraphY;
+        this.color = color; // color of the graph
+        
+        this.legend = legend;
+        this.axisDescription = axisDescription;
+        
+        // fill x vector; vector y is filled in real-time
+        for (var i=0; i<this.maxGraphX+1; i++) {
+            this.x[i] = i; // values for the x coordinate; 0, 1, 2, ...
+        }
+    }
+    
+    addValueOrCutAndAdd(yValue) {
+        if (this.y[0].length == this.maxGraphX+1) { // if canvas size is 10x10 we have 11x11 points (starting with 0 and ending with 10)
+            for (var i = 0; i < yValue.length; i++) { // v zanki gremo po polju yInput in na mestu 0 eno vrednost odrežemo, na koncu pa eno mesto dodamo - zapišemo novo vrednost yInput
+                this.y[i].splice(0, 1); // on the position 0 in the vector y we cut one value
+                this.y[i][this.maxGraphX] = yValue[i]; // at the end of the array the new value is added
+            }
+        }
+        else {
+            for (var i = 0; i < yValue.length; i++) { // z zanko gremo po vseh vrsticah za matrike y
+                this.y[i].push(yValue[i]); // if the array is not yet full, we push the new value in the array / vrednost v oklepaju [] t.j. index je za ena večji; npr., če imamo eno vrednost je indeks [0], length pa 1
+            }
+        }
+    }
+    
+    plot(yValue) {
+        this.addValueOrCutAndAdd(yValue);
+        this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight); // clear the canvas
+        
+        for (var i=0; i < yValue.length; i++) { // zanka, ki gre po vrsticah y matrike
+        this.ctx.strokeStyle = this.color[i]; // determine color
+        this.ctx.beginPath(); // for the start of the line
+            for (var j=0; j<this.y[0].length; j++) {
+                this.ctx.lineTo(this.x[j]/this.rangeX*this.canvasWidth, (this.canvasHeight - ((this.y[i][j]-this.minGraphY)/this.rangeY) * this.canvasHeight)); // for y values we multiply with canas height, eg. 0.25 * 100 = 25
+            }
+        this.ctx.stroke();
+        }
+        
+        // add legend
+        for( var i=0; i<this.legend.length; i++ ) { // legend and color should be of the same size
+            this.ctx.font = "11px Arial";
+            this.ctx.fillText(this.legend[i], 49+i*54, 10);
+            this.ctx.strokeStyle = this.color[i];
+            this.ctx.beginPath(); // beginning of the short line for the legend
+            this.ctx.lineTo(37+i*54, 6);
+            this.ctx.lineTo(46+i*54, 6);
+            this.ctx.stroke();
+        }
+        
+        // add axis descritions
+        this.ctx.fillText("<-" + this.axisDescription[0] + "|" + this.axisDescription[1] + "->", 150, 95)
+        this.ctx.fillText(this.axisDescription[2], 5, 95);
+        this.ctx.fillText(this.axisDescription[3], 5, 11);
+        
+    }
+}
+
+class LogDiv {
+    constructor(divId, numberOfLinesBeforeScroll) {
+        this.divElement = document.getElementById(divId); // name of div where values will be printed
+        this.numberOfLinesBeforeScroll = numberOfLinesBeforeScroll; // number of lines which print before scroll
+        this.linesPrintCounter = 0;
+    }
+    log(msg) { // function for printout of the messages with scroll functionality
+        var node=document.createElement("tr"); // we create the variable node as the a table row (table row)
+        var textnode=document.createTextNode(this.linesPrintCounter + " | " + msg); // we create element with the text
+        node.appendChild(textnode); // adding text to "node", t.j. vrstici tabele
+        this.divElement.insertBefore(node, this.divElement.childNodes[0]); // inserting into variable node
+        if (this.linesPrintCounter > this.numberOfLinesBeforeScroll-1) { // if the lines are more than limit -> start with scroll
+            this.divElement.removeChild(this.divElement.childNodes[this.numberOfLinesBeforeScroll], this.divElement.childNodes[this.numberOfLinesBeforeScroll]); // we remove the oldest printout
+        }
+        this.linesPrintCounter++; // increasing the number of printouts
+    } 
+    
+}
+
+function load() {
+    
+    // ustvarimo objekt za izpis vrednosti (log)
+    divLog = new LogDiv("divZaIzpis", 10);
+
+    graf1 = new Graf("canvas1", 0, 200, 0, 1023, ["red", "green"], ["Želena", "Dejanska"], ["0", "200", "0", "1023"]); // argumenti: Arg1: canvasId, Arg2: maxX, Arg3: maxY, Arg4: [vektor barv]; ta določi velikost matrike yValue (če podamo eno barvo, npr. ["red"], predvidimo samo eno časovno vrsto, ["red", "green", "blue"] -> tri časovne vrste)
+    graf2 = new Graf("canvas2", 0, 200, -255, 255, ["red"], ["PWM"], ["0", "200", "-255", "255"]); 
+    graf3 = new Graf("canvas3", 0, 200, -100, 100, ["red", "green", "blue"], ["KpE", "KiIedt", "KdDe_dt"], ["0", "200", "-100", "100"]); 
+    graf4 = new Graf("canvas4", 0, 200, -1023, 1023, ["red"], ["Error"], ["0", "200", "-1023", "1023"]);
+    graf5 = new Graf("canvas5", 0, 200, -10000, 10000, ["red"], ["Integ(Err*dt)"], ["0", "200", "-10000", "10000"]);
+    graf6 = new Graf("canvas6", 0, 200, -150, 150, ["red"], ["dError/dt"], ["0", "200", "-150", "150"]);
+
+}
+
+socket.on("klientBeriVrednosti", function(value){
+    
+    potVrednost1 = value.želenaVrednost; // žel. vr. iz strežnika
+    potVrednost2 = value.dejanskaVrednost; // dej. vr. iz strežnika
+    
+    graf1.plot([potVrednost1, potVrednost2]); // graf želene in dejanske vrednosti
+    
+    graf2.plot([value.pwm]);
+    // narišemo sredinsko črto na grafu 2.
+    graf2.ctx.strokeStyle = "#add8e6";
+    graf2.ctx.beginPath(); // sredinska črta pri 0
+    graf2.ctx.lineTo(0, 50); // začetna točka
+    graf2.ctx.lineTo(200, 50); // končna točka
+    graf2.ctx.stroke();
+    
+    graf3.plot([value.KpE, value.KiIedt, value.KdDe_dt]);
+
+    graf4.plot([value.err]); // graf za P del
+    graf5.plot([value.errVsota]); // graf za I del
+    graf6.plot([value.dErr]); // graf za D del   
+    
+    divLog.log(value.želenaVrednost + "|" + value.dejanskaVrednost + "|" + (value.želenaVrednost-value.dejanskaVrednost) + "|" + (value.pwm).toFixed(0));
+
+});
+
+socket.on("statičnoSporočiloKlientu", function(sporočilo){
+   document.getElementById("divZaStatičniIzpis").innerHTML = "Status: " + sporočilo;
+});
+
+function startKontrolniAlgoritem1() {
+    stopKontrolniAlgoritem(); // za vsak primer algoritem najprej zaustavimo
+    faktor = document.getElementById("faktor").value; // beremo vrednost faktorja iz vnosnega polja
+    socket.emit("startKontrolniAlgoritem", {"štKontrolnegaAlg": 1, "faktor": faktor}); /// beremo vrednost iz vnosnega polja
+}
+function startKontrolniAlgoritem2() {
+    stopKontrolniAlgoritem(); // za vsak primer algoritem najprej zaustavimo
+    Kp1 = document.getElementById("Kp1").value; // beremo vrednost iz vnosnega polja
+    Ki1 = document.getElementById("Ki1").value; // beremo vrednost iz vnosnega polja
+    Kd1 = document.getElementById("Kd1").value; // beremo vrednost iz vnosnega polja
+    socket.emit("startKontrolniAlgoritem", {"štKontrolnegaAlg": 2, "Kp1": Kp1, "Ki1": Ki1, "Kd1": Kd1}); // pošljemo json z vrednostmi na strežnik
+}
+
+function stopKontrolniAlgoritem() {
+    socket.emit("stopKontrolniAlgoritem");
+}
+
+function pošljiPozicijo () {
+    var vrednostPozicije = document.getElementById("pozicija").value;
+    socket.emit("pošljiPozicijo", vrednostPozicije);
+};
+
+function utrip() {
+
+     var pozicijaUtrip = 0;
+ 
+     intervalFunkcijaUtripa = setInterval(function() {
+     if (pozicijaUtrip == 200) {
+         pozicijaUtrip = 900;
+     }
+     else {
+         pozicijaUtrip = 200;
+     }
+     socket.emit("pošljiPozicijo", pozicijaUtrip);
+     }, 2000);
+     }
+
+</script>
+
+
+</body>
+
+</html>

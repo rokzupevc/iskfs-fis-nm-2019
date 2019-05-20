@@ -17,21 +17,21 @@ Pozicija: <input id="pozicija" value=512 />
 Pozicija: <input id="pozicijam" value=512 />    
 <button id="pošljiPozicijom" onClick="pošljiPozicijom()">Pozicija</button>
 <p></p>
-<button id="pošljim80" onClick="pošljim80()">Pošlji -80</button>
+<button id="pošljim80" onClick="pošljim80() "onClick="pošljim80mm()" >Pošlji -80</button>
 <button id="pošljim40" onClick="pošljim40()">Pošlji -40</button>
 <button id="pošlji0" onClick="pošlji0()">Pošlji 0</button>
 <button id="pošljip40" onClick="pošljip40()">Pošlji +40</button>
 <button id="pošljip80" onClick="pošljip80()">Pošlji +80</button>
 <p></p>
 <p></p>
-<button id="pošljim80m" onClick="pošljimm80()">Pošlji -80</button>
-<button id="pošljim40m" onClick="pošljimm40()">Pošlji -40</button>
+<button id="pošljim80m" onClick="pošljim80m()">Pošlji -80</button>
+<button id="pošljim40m" onClick="pošljim40m()">Pošlji -40</button>
 <button id="pošlji0m" onClick="pošlji0m()">Pošlji 0</button>
 <button id="pošljip40m" onClick="pošljip40m()">Pošlji +40</button>
 <button id="pošljip80m" onClick="pošljip80m()">Pošlji +80</button>
 <p></p>
 faktor: <input id="faktor" value="0.5" size="5" />
-<button id="startKontrolniAlgoritem1" onClick="startKontrolniAlgoritem1();">Start Ctrl Alg</button>
+<button id="startKontrolniAlgoritem1" onClick="startKontrolniAlgoritem1();" onClick="startKontrolniAlgoritem2mm();">Start Ctrl Alg</button>
 <button id="stopKontrolniAlgoritem" onClick="stopKontrolniAlgoritem();">Stop Ctrl Alg</button>
 <p></p>
 Kp: <input id="Kp1" value="0.5" size = "5" />
@@ -76,6 +76,7 @@ var števecIzpisanihVrstic = 0;
 
 var socket = io.connect("192.168.1.116:8080");
 var socket2 = io.connect("192.168.1.117:8080"); 
+var socket3 = io.connect("192.168.1.117:8080"); 
 
 function load() {
     canvas = document.getElementById("cv");
@@ -177,6 +178,9 @@ socket.on("statičnoSporočiloKlientu", function(sporočilo){
 socket2.on("statičnoSporočiloKlientu", function(sporočilo){
    document.getElementById("divZaStatičniIzpis").innerHTML =  sporočilo;
 });
+socket3.on("statičnoSporočiloKlientu", function(sporočilo){
+   document.getElementById("divZaStatičniIzpis").innerHTML =  sporočilo;
+});
 
 
 
@@ -190,6 +194,11 @@ function startKontrolniAlgoritem1m() {
     stopKontrolniAlgoritem(); 
     faktor = document.getElementById("faktor").value; 
     socket2.emit("startKontrolniAlgoritem", {"štKontrolnegaAlg": 1, "faktor": faktor});
+}
+function startKontrolniAlgoritem1mm() {
+    stopKontrolniAlgoritem(); 
+    faktor = document.getElementById("faktor").value; 
+    socket3.emit("startKontrolniAlgoritem", {"štKontrolnegaAlg": 1, "faktor": faktor});
 }
 function startKontrolniAlgoritem2() {
     stopKontrolniAlgoritem(); 
@@ -205,6 +214,13 @@ function startKontrolniAlgoritem2m() {
     Kd1 = document.getElementById("Kd1").value; 
     socket2.emit("startKontrolniAlgoritem", {"štKontrolnegaAlg": 2, "Kp1": Kp1, "Ki1": Ki1, "Kd1": Kd1}); 
 }
+function startKontrolniAlgoritem2mm() {
+    stopKontrolniAlgoritem(); 
+    Kp1 = document.getElementById("Kp1").value; 
+    Ki1 = document.getElementById("Ki1").value; 
+    Kd1 = document.getElementById("Kd1").value; 
+    socket3.emit("startKontrolniAlgoritem", {"štKontrolnegaAlg": 2, "Kp1": Kp1, "Ki1": Ki1, "Kd1": Kd1}); 
+}
 
 function pošljiPozicijo () {
     var vrednostPozicije = document.getElementById("pozicija").value;
@@ -214,6 +230,10 @@ function pošljiPozicijom () {
     var vrednostPozicije = document.getElementById("pozicija").value;
     socket2.emit("PošljiVrednost", vrednostPozicije);
 };
+function pošljiPozicijomm () {
+    var vrednostPozicije = document.getElementById("pozicija").value;
+    socket2.emit("pošljiPozicijo", vrednostPozicije);
+};
 function pošljim80 () {
     var vrednostPozicije =240 ;
     socket.emit("pošljiPozicijo", vrednostPozicije);
@@ -221,6 +241,10 @@ function pošljim80 () {
 function pošljim80m () {
     var vrednostPozicije =240 ;
     socket2.emit("PošljiVrednost", vrednostPozicije);
+};
+function pošljim80mm () {
+    var vrednostPozicije =240 ;
+    socket3.emit("pošljiPozicijo", vrednostPozicije);
 };
 
 function pošljim40 () {
@@ -231,6 +255,10 @@ function pošljim40m () {
     var vrednostPozicije =376 ;
     socket2.emit("PošljiVrednost", vrednostPozicije);
 };
+function pošljim40mm () {
+    var vrednostPozicije =376 ;
+    socket3.emit("pošljiPozicijo", vrednostPozicije);
+};
 
 function pošlji0 () {
     var vrednostPozicije = 512;
@@ -239,6 +267,10 @@ function pošlji0 () {
 function pošlji0m () {
     var vrednostPozicije = 512;
     socket2.emit("PošljiVrednost", vrednostPozicije);
+};
+function pošlji0mm () {
+    var vrednostPozicije = 512;
+    socket2.emit("pošljiPozicijo", vrednostPozicije);
 };
 
 function pošljip40 () {
@@ -249,6 +281,10 @@ function pošljip40m () {
     var vrednostPozicije = 649;
     socket2.emit("PošljiVrednost", vrednostPozicije);
 };
+function pošljip40mm () {
+    var vrednostPozicije = 649;
+    socket2.emit("pošljiPozicijo", vrednostPozicije);
+};
 
 function pošljip80() {
     var vrednostPozicije =785 ;
@@ -258,7 +294,10 @@ function pošljip80m() {
     var vrednostPozicije =785 ;
     socket2.emit("PošljiVrednost", vrednostPozicije);
 };
-
+function pošljip80m() {
+    var vrednostPozicije =785 ;
+    socket3.emit("pošljiPozicijo", vrednostPozicije);
+};
 
 
 
@@ -269,6 +308,9 @@ function stopKontrolniAlgoritem() {
 }
 function stopKontrolniAlgoritemm() {
     socket2.emit("stopKontrolniAlgoritem");
+}
+function stopKontrolniAlgoritemmm() {
+    socket3.emit("stopKontrolniAlgoritem");
 }
 
 function log(sporočilo) {

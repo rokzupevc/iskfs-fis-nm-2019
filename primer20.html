@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<meta charset=utf-8>
+
+<!-- ********************************************************************** -->        
+<!-- University of Maribor ************************************************ -->
+<!-- Faculty of Organizational Sciences *********************************** -->
+<!-- Cybernetics & Decision Support Systems Laboratory ******************** -->
+<!-- Andrej Škraba ******************************************************** -->
+<!-- ********************************************************************** -->        
+
+<html>
+<head>
+    <title>Speech control</title>
+</head>
+
+<style>
+body {font-family: courier}
+</style>        
+    
+<div id="interimResults" style="border-style:dotted; border-color:#c3c3c3; padding:10px; font-size:24px; font-color:#00ff00; width:477px; text-align:center;">
+interimResult
+</div>
+
+<div id="finalResults" style="border-style:dotted; border-color:#c3c3c3; padding:10px; font-size:24px; font-color:#00ff00; width:477px; text-align:center;">
+finalResults
+</div>
+
+<div id="speech" style="border-style:dotted; border-color:#c3c3c3; padding:10px; font-size:24px; font-color:#00ff00; width:477px; text-align:center;">
+Press button START for speech input.
+</div>
+
+    
+<div class="right">
+  <button id="start_button" onclick="startButton(event)" style="height: 65px; width: 162px; font-size:24px;">Start</button>
+</div>
+<div id="results">
+  <span id="final_span"></span>
+  <span id="interim_span"></span>
+  <p>
+</div>    
+
+<!-- ******************************************************************************************** -->
+<!-- *** Button switchboard ********************************************************************* -->
+<!-- ******************************************************************************************** -->                
+<br></br>
+
+<button id="buttonLeft" onClick="left()" style="height: 162px; width: 162px; font-size:35px;">LEFT</button>
+<button id="buttonCenter" onClick="center()" style="height: 162px; width: 162px; font-size:35px;">CENTER</button>
+<button id="buttonRight" onClick="right()" style="height: 162px; width: 162px; font-size:35px;">RIGHT</button>    
+
+<br></br>
+</p>    
+<!-- ******************************************************************************************** -->
+<!-- ******************************************************************************************** -->
+<!-- ******************************************************************************************** -->    
+
+<body>
+    
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+var lastResult;
+
+var final_span = document.getElementById("final_span");
+var interim_span = document.getElementById("interim_span");
+    
+function ReplaceContentInContainer(id, content) { // for replacing the div content
+    var container = document.getElementById(id);
+    container.innerHTML = content;
+}    
+    
+// get the socket.io library from the server
+var socket = io.connect("192.168.1.116:8080", {secure: true}); 
+
+function left () {
+  startKontrolniAlgoritem();
+  socket.emit("pošljiPozicijo", 800);
+};
+  
+
+function center () {
+  startKontrolniAlgoritem();
+  socket.emit("pošljiPozicijo", 512);
+}
+
+function right () {
+  startKontrolniAlgoritem();
+  socket.emit("pošljiPozicijo", 300);
+}
+    
+// *****************************************************************************
+// Code for speech API START
+// *****************************************************************************
+
+var final_transcript = '';
+var recognizing = false;
+var ignore_onend;
+var start_timestamp;
+if (!('webkitSpeechRecognition' in window)) {
+  upgrade();
+} else {
+  var recognition = new webkitSpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onstart = function() {
+    recognizing = true;
+    document.getElementById("start_button").innerText = "Speak to microphone";
+  };
+
+  recognition.onerror = function(event) {
+    if (event.error == 'no-speech') {
+      document.getElementById("start_button").innerText = "Start Microphone";
+      ReplaceContentInContainer("speech", "Speech not present.");
+      ignore_onend = true;
+    }
+    if (event.error == 'audio-capture') {
+      document.getElementById("start_button").innerText = "Start Microphone";
+      ReplaceContentInContainer("speech", "No microphone!");
+      ignore_onend = true;
+    }
+    if (event.error == 'not-allowed') {
+      if (event.timeStamp - start_timestamp < 100) {
+        ReplaceContentInContainer("speech", "Speech blocked / disabled!");
+      } else {
+        ReplaceContentInContainer("speech", "Speech input rejected.");
+      }
+      ignore_onend = true;
+    }
+  };
+  
+  recognition.onend = function() { // start the recognition once again
+    ReplaceContentInContainer("speech", "New Restart!");
+    document.getElementById("start_button").innerText = "Microphone disabled";
+    recognition.start();
+};
+
+
+var final_trs;
+
+  recognition.onresult = function(event) {
+    var interim_transcript = '';
+    // interim_transcript += event.results[i][0].transcript;
+    for (var i = event.resultIndex; i < event.results.length; ++i) {
+      if (event.results[i].isFinal) {
+        final_transcript += event.results[i][0].transcript;
+        final_trs = event.results[i][0].transcript;
+        ReplaceContentInContainer("finalResults", final_trs);
+        interim_transcript += event.results[i][0].transcript;
+      } else {
+        interim_transcript += event.results[i][0].transcript;
+      }
+    } 
+
+    ReplaceContentInContainer("interimResults", interim_transcript);
+
+        // *********************************************************************
+        // here we enter our commands
+        // *********************************************************************  
+ 
+        // *********************************************************************
+        // LEFT
+        // *********************************************************************    
+        if(interim_transcript == "left" || interim_transcript == " left" || interim_transcript == "last" || interim_transcript == " last" || interim_transcript == " let" || interim_transcript == "let" || interim_transcript == "Lyft" || interim_transcript == " Lyft" || interim_transcript == "lift" || interim_transcript == " lift") // since the pause is made during the speech, the space should also be considered, i.e. +1, t.j. " 1"
+        {
+            //socket.emit("left", 1);
+            socket.emit("pošljiPozicijo", 800);
+        };
+        // *********************************************************************
+        // CENTER
+        // *********************************************************************
+                if(interim_transcript == "center" || interim_transcript == " center" || interim_transcript == "Center" || interim_transcript == " Center" || interim_transcript == " Stop" || interim_transcript == "stop" || interim_transcript == " stop" || interim_transcript == "centre" || interim_transcript == " centre" || interim_transcript == "Santa" || interim_transcript == " Santa" || interim_transcript == "send" || interim_transcript == " send") // since the pause is made during the speech, the space should also be considered, i.e. +1, t.j. " 1"
+        {
+            //socket.emit("center", 1);
+            socket.emit("pošljiPozicijo", 512);
+        };
+        // *********************************************************************
+        // RIGHT
+        // *********************************************************************
+        if(interim_transcript == "right" || interim_transcript == " right" ) // since the pause is made during the speech, the space should also be considered, i.e. +1, t.j. " 1"
+        {
+            socket.emit("pošljiPozicijo", 300);
+            
+            //socket.emit("right", 1);
+        };
+
+        // *********************************************************************
+        // end of entering commands part
+        // *********************************************************************    
+
+    }; // End of recognition.on.result
+} // End of else (if we have webkitSpeechRecognition in window object, i.e. a good version of Chrome)
+
+function upgrade() { // function to allert the user, that upgrade is needed
+    ReplaceContentInContainer("speech", 'You have to upgrade Chrome to version 25 of higher');
+}
+
+function startButton(event) {
+  if (recognizing) {
+    recognition.stop();
+    return;
+  }
+  final_transcript = '';
+  recognition.lang = "en-US"; // determine language
+
+  
+  recognition.start();
+  ignore_onend = false;
+  final_span.innerHTML = '';
+  interim_span.innerHTML = '';
+  document.getElementById("start_button").innerText = "Microphone enabled";
+  ReplaceContentInContainer("speech", "Please talk!");
+  start_timestamp = event.timeStamp;
+}
+// *****************************************************************************
+// Speech API code END
+// *****************************************************************************    
+ 
+function stopKontrolniAlgoritem() {
+    socket.emit("stopKontrolniAlgoritem");
+} 
+   
+function startKontrolniAlgoritem() {
+    //stopKontrolniAlgoritem(); // za vsak primer algoritem najprej zaustavimo
+    socket.emit("startKontrolniAlgoritem", {"štKontrolnegaAlg": 2, "Kp1": 0.8, "Ki1": 0.0055, "Kd1": 0.25}); // pošljemo json z vrednostmi na strežnik
+}
+   
+   
+    
+</script>
+</body>
+</html>
